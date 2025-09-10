@@ -1247,7 +1247,7 @@ export default function ITDashboard() {
                           : "-"}
                       </TableCell>
                       <TableCell>{r.vitelGlobal?.id || "-"}</TableCell>
-                      <TableCell>{r.lmPlayer.id || "-"}</TableCell>
+                      <TableCell>{r.lmPlayer?.id || "-"}</TableCell>
                       <TableCell>
                         <Sheet>
                           <SheetTrigger asChild>
