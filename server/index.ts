@@ -1,5 +1,6 @@
 import "dotenv/config";
 import fs from "fs";
+import os from "os";
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -44,8 +45,14 @@ export function createServer() {
   app.use(express.urlencoded({ extended: true }));
   app.use(attachIdentity);
 
-  // Static for uploaded files
-  app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+  // Static for uploaded files. Use UPLOADS_DIR env if set, otherwise a writable tmp folder
+  const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(os.tmpdir(), "uploads");
+  try {
+    fs.mkdirSync(UPLOADS_DIR, { recursive: true });
+  } catch (e) {
+    console.warn("Failed to create uploads dir", UPLOADS_DIR, e?.message || e);
+  }
+  app.use("/uploads", express.static(UPLOADS_DIR));
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {
