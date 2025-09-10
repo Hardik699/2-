@@ -1,4 +1,5 @@
 import "dotenv/config";
+import fs from "fs";
 import express from "express";
 import cors from "cors";
 import path from "path";
@@ -12,6 +13,20 @@ import {
   syncHRDataToGoogleSheets,
   syncMasterDataFromDb,
 } from "./services/googleSheets";
+
+// Load persisted config from data/config.json (if present) and apply to process.env
+try {
+  const configPath = path.resolve(process.cwd(), "data", "config.json");
+  if (fs.existsSync(configPath)) {
+    const raw = fs.readFileSync(configPath, "utf8");
+    const cfg = JSON.parse(raw || "{}");
+    for (const k of Object.keys(cfg || {})) {
+      if (!process.env[k]) process.env[k] = String(cfg[k]);
+    }
+  }
+} catch (e) {
+  console.warn("Failed to load data/config.json:", e?.message || e);
+}
 
 const HAS_DB = !!(
   process.env.DATABASE_URL ||
@@ -104,18 +119,51 @@ export function createServer() {
         });
       } catch (e: any) {
         await pool.end().catch(() => {});
-        return res
-          .status(400)
-          .json({
-            ok: false,
-            connected: false,
-            error: e?.message || String(e),
-          });
+        return res.status(400).json({
+          ok: false,
+          connected: false,
+          error: e?.message || String(e),
+        });
       }
     } catch (e: any) {
       return res
         .status(500)
         .json({ ok: false, error: e?.message || "Failed to test" });
+    }
+  });
+
+  // Config save
+  app.post("/api/config/save", requireAdmin, async (req, res) => {
+    try {
+      const allowed = [
+        "DATABASE_URL",
+        "NETLIFY_DATABASE_URL",
+        "DATABASE_URL_UNPOOLED",
+        "NETLIFY_DATABASE_URL_UNPOOLED",
+        "POSTGRES_URL",
+        "GOOGLE_SERVICE_ACCOUNT_CREDENTIALS",
+        "GOOGLE_SHEET_ID",
+        "GOOGLE_SHEET_ID_HR",
+      ];
+      const payload: any = {};
+      for (const k of allowed) {
+        if (req.body[k] !== undefined) payload[k] = req.body[k];
+      }
+      if (Object.keys(payload).length === 0)
+        return res
+          .status(400)
+          .json({ ok: false, error: "No supported keys provided" });
+      const fsp = await import("fs/promises");
+      const dataPath = path.resolve(process.cwd(), "data", "config.json");
+      await fsp.mkdir(path.dirname(dataPath), { recursive: true });
+      await fsp.writeFile(dataPath, JSON.stringify(payload, null, 2), "utf8");
+      // Apply to process.env for immediate effect
+      for (const [k, v] of Object.entries(payload)) {
+        process.env[k] = String(v);
+      }
+      res.json({ ok: true });
+    } catch (e: any) {
+      res.status(500).json({ ok: false, error: e?.message || String(e) });
     }
   });
 
@@ -158,7 +206,11 @@ export function createServer() {
   app.post("/api/google-sheets/sync-master-data", syncMasterDataToGoogleSheets);
   app.get("/api/google-sheets/info", getSpreadsheetInfo);
   // Admin route: sync directly from Postgres DB into Google Sheets
-  app.post("/api/google-sheets/sync-master-data-from-db", requireAdmin, syncMasterDataFromDb);
+  app.post(
+    "/api/google-sheets/sync-master-data-from-db",
+    requireAdmin,
+    syncMasterDataFromDb,
+  );
 
   // HR Google Sheets (separate spreadsheet)
   app.post("/api/google-sheets/sync-hr", syncHRDataToGoogleSheets);
@@ -170,7 +222,11 @@ export function createServer() {
       // Clear file-store salaries.json
       const fs = await import("fs/promises");
       const dataPath = path.resolve(process.cwd(), "data", "salaries.json");
-      await fs.writeFile(dataPath, JSON.stringify({ salaries: [], documents: [] }, null, 2), "utf8");
+      await fs.writeFile(
+        dataPath,
+        JSON.stringify({ salaries: [], documents: [] }, null, 2),
+        "utf8",
+      );
 
       // Clear uploads directory
       const uploadsDir = path.resolve(process.cwd(), "uploads");

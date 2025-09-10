@@ -1,0 +1,5 @@
+{
+  "DATABASE_URL": "postgresql://neondb_owner:npg_Qhjkl24tnxRE@ep-patient-dew-aeh2x2hr-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+  "NETLIFY_DATABASE_URL": "postgresql://neondb_owner:npg_Qhjkl24tnxRE@ep-patient-dew-aeh2x2hr-pooler.c-2.us-east-2.aws.neon.tech/neondb?sslmode=require&channel_binding=require",
+  "GOOGLE_SHEET_ID": "1RM2r0df8Y9pnCxOuG7CyHeu_p8L7dgYR60GrHxYopTA"
+}
