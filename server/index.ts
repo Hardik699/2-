@@ -119,13 +119,11 @@ export function createServer() {
         });
       } catch (e: any) {
         await pool.end().catch(() => {});
-        return res
-          .status(400)
-          .json({
-            ok: false,
-            connected: false,
-            error: e?.message || String(e),
-          });
+        return res.status(400).json({
+          ok: false,
+          connected: false,
+          error: e?.message || String(e),
+        });
       }
     } catch (e: any) {
       return res
@@ -208,7 +206,11 @@ export function createServer() {
   app.post("/api/google-sheets/sync-master-data", syncMasterDataToGoogleSheets);
   app.get("/api/google-sheets/info", getSpreadsheetInfo);
   // Admin route: sync directly from Postgres DB into Google Sheets
-  app.post("/api/google-sheets/sync-master-data-from-db", requireAdmin, syncMasterDataFromDb);
+  app.post(
+    "/api/google-sheets/sync-master-data-from-db",
+    requireAdmin,
+    syncMasterDataFromDb,
+  );
 
   // HR Google Sheets (separate spreadsheet)
   app.post("/api/google-sheets/sync-hr", syncHRDataToGoogleSheets);
@@ -220,7 +222,11 @@ export function createServer() {
       // Clear file-store salaries.json
       const fs = await import("fs/promises");
       const dataPath = path.resolve(process.cwd(), "data", "salaries.json");
-      await fs.writeFile(dataPath, JSON.stringify({ salaries: [], documents: [] }, null, 2), "utf8");
+      await fs.writeFile(
+        dataPath,
+        JSON.stringify({ salaries: [], documents: [] }, null, 2),
+        "utf8",
+      );
 
       // Clear uploads directory
       const uploadsDir = path.resolve(process.cwd(), "uploads");
