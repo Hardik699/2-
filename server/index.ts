@@ -41,8 +41,9 @@ export function createServer() {
 
   // Middleware
   app.use(cors());
-  app.use(express.json());
-  app.use(express.urlencoded({ extended: true }));
+  // increase payload size limits to handle larger requests/uploads metadata
+  app.use(express.json({ limit: '10mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '10mb' }));
   app.use(attachIdentity);
 
   // Static for uploaded files (use /tmp on serverless like Netlify/Vercel)
