@@ -491,7 +491,7 @@ export default function ITDashboard() {
           ? "vitel"
           : "vitel";
     const text =
-      `${r.employeeName} ${r.systemId} ${r.emails.map((e) => e.email).join(" ")} ${r.vitelGlobal?.id || ""} ${providerLabel}`.toLowerCase();
+      `${r.employeeName} ${r.systemId} ${(r.emails || []).map((e) => e.email).join(" ")} ${r.vitelGlobal?.id || ""} ${providerLabel}`.toLowerCase();
     const matchQuery = !query || text.includes(query.toLowerCase());
     return matchDept && matchQuery;
   });
