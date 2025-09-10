@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import mime from "mime-types";
 import { db } from "../data";
 import {
@@ -17,8 +18,17 @@ import {
 } from "@shared/api";
 import { requireAdmin } from "../middleware/auth";
 
-const uploadDir = path.resolve(process.cwd(), "uploads");
-fs.mkdirSync(uploadDir, { recursive: true });
+// Use a writable uploads directory. In serverless environments (Netlify functions)
+// the code directory is read-only, so prefer a tmp directory unless UPLOADS_DIR is set.
+const uploadDir = process.env.UPLOADS_DIR
+  ? path.resolve(process.env.UPLOADS_DIR)
+  : path.join(os.tmpdir(), "uploads");
+try {
+  fs.mkdirSync(uploadDir, { recursive: true });
+} catch (e) {
+  // Best-effort: if creation fails, throw a descriptive error so deploy logs show it.
+  console.warn("Failed to create uploads dir", uploadDir, e?.message || e);
+}
 
 const storage = multer.diskStorage({
   destination: (_req, _file, cb) => cb(null, uploadDir),
