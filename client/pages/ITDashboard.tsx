@@ -1237,7 +1237,7 @@ export default function ITDashboard() {
                       <TableCell>{r.systemId}</TableCell>
                       <TableCell>{r.tableNumber}</TableCell>
                       <TableCell>
-                        {r.emails.map((e) => e.email).join(", ") || "-"}
+                        {(r.emails || []).map((e) => e.email).join(", ") || "-"}
                       </TableCell>
                       <TableCell>
                         {r.vitelGlobal?.id
