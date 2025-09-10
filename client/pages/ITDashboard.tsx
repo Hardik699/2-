@@ -176,13 +176,15 @@ export default function ITDashboard() {
     let ids = assets
       .filter((a) =>
         newProvider === "vonage"
-          ? a.category === "vonage"
-          : a.category === "vitel" || a.category === "vitel-global",
+          ? a?.category === "vonage"
+          : a?.category === "vitel" || a?.category === "vitel-global",
       )
       .map((a) =>
-        newProvider === "vonage"
-          ? a.vonageExtCode || a.vonageNumber || a.id
-          : a.id,
+        a
+          ? newProvider === "vonage"
+            ? a.vonageExtCode || a.vonageNumber || a.id
+            : a.id
+          : undefined,
       )
       .filter((x: any) => typeof x === "string" && x.trim());
     setNewProviderIds(ids);
@@ -194,13 +196,17 @@ export default function ITDashboard() {
     const assets = raw ? (JSON.parse(raw) as any[]) : [];
     if (provider === "VITEL_GLOBAL") {
       return assets
-        .filter((a: any) => a.category === "vitel-global")
-        .map((a: any) => a.id);
+        .filter((a: any) => a?.category === "vitel-global")
+        .map((a: any) => a?.id)
+        .filter((x: any) => typeof x === "string");
     }
     if (provider === "VONAGE") {
       return assets
-        .filter((a: any) => a.category === "vonage")
-        .map((a: any) => a.vonageExtCode || a.vonageNumber || a.id);
+        .filter((a: any) => a?.category === "vonage")
+        .map((a: any) =>
+          a ? a.vonageExtCode || a.vonageNumber || a.id : undefined,
+        )
+        .filter((x: any) => typeof x === "string");
     }
     return [];
   }
@@ -426,13 +432,15 @@ export default function ITDashboard() {
       const ids = assets
         .filter((a: any) =>
           provider === "vonage"
-            ? a.category === "vonage"
-            : a.category === "vitel" || a.category === "vitel-global",
+            ? a?.category === "vonage"
+            : a?.category === "vitel" || a?.category === "vitel-global",
         )
         .map((a: any) =>
-          provider === "vonage"
-            ? a.vonageExtCode || a.vonageNumber || a.id
-            : a.id,
+          a
+            ? provider === "vonage"
+              ? a.vonageExtCode || a.vonageNumber || a.id
+              : a.id
+            : undefined,
         )
         .filter((x: any) => typeof x === "string" && x.trim());
       setNewProviderIds(ids);
@@ -491,7 +499,7 @@ export default function ITDashboard() {
           ? "vitel"
           : "vitel";
     const text =
-      `${r.employeeName} ${r.systemId} ${r.emails.map((e) => e.email).join(" ")} ${r.vitelGlobal?.id || ""} ${providerLabel}`.toLowerCase();
+      `${r.employeeName} ${r.systemId} ${(r.emails || []).map((e) => e.email).join(" ")} ${r.vitelGlobal?.id || ""} ${providerLabel}`.toLowerCase();
     const matchQuery = !query || text.includes(query.toLowerCase());
     return matchDept && matchQuery;
   });
@@ -663,9 +671,9 @@ export default function ITDashboard() {
                           <SelectValue placeholder="Select employee" />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-800 border-slate-700 text-white max-h-64">
-                          {employees.map((e) => (
-                            <SelectItem key={e.id} value={e.id}>
-                              {e.fullName}
+                          {(employees || []).filter(Boolean).map((e, i) => (
+                            <SelectItem key={e?.id || i} value={e?.id || ""}>
+                              {e?.fullName || "(unknown)"}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -692,11 +700,13 @@ export default function ITDashboard() {
                               No PC/Laptop IDs available
                             </div>
                           ) : (
-                            availableSystemIds.map((id) => (
-                              <SelectItem key={id} value={id}>
-                                {id}
-                              </SelectItem>
-                            ))
+                            (availableSystemIds || [])
+                              .filter(Boolean)
+                              .map((id, i) => (
+                                <SelectItem key={id || i} value={id || ""}>
+                                  {id || ""}
+                                </SelectItem>
+                              ))
                           )}
                         </SelectContent>
                       </Select>
@@ -858,11 +868,16 @@ export default function ITDashboard() {
                                       No IDs available
                                     </div>
                                   ) : (
-                                    getProviderIds(row.provider).map((id) => (
-                                      <SelectItem key={id} value={id}>
-                                        {id}
-                                      </SelectItem>
-                                    ))
+                                    (getProviderIds(row.provider) || [])
+                                      .filter(Boolean)
+                                      .map((id, i) => (
+                                        <SelectItem
+                                          key={id || i}
+                                          value={id || ""}
+                                        >
+                                          {id || ""}
+                                        </SelectItem>
+                                      ))
                                   )}
                                 </SelectContent>
                               </Select>
@@ -958,11 +973,13 @@ export default function ITDashboard() {
                               No IDs found in System Info
                             </div>
                           ) : (
-                            newProviderIds.map((id) => (
-                              <SelectItem key={id} value={id}>
-                                {id}
-                              </SelectItem>
-                            ))
+                            (newProviderIds || [])
+                              .filter(Boolean)
+                              .map((id, i) => (
+                                <SelectItem key={id || i} value={id || ""}>
+                                  {id || ""}
+                                </SelectItem>
+                              ))
                           )}
                         </SelectContent>
                       </Select>
@@ -1228,8 +1245,14 @@ export default function ITDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((r) => (
-                    <TableRow key={r.id}>
+                  {(filtered || []).map((r) => (
+                    <TableRow
+                      key={
+                        r?.id ||
+                        r?.employeeId ||
+                        Math.random().toString(36).slice(2, 8)
+                      }
+                    >
                       <TableCell className="font-medium">
                         {r.employeeName}
                       </TableCell>
@@ -1237,7 +1260,7 @@ export default function ITDashboard() {
                       <TableCell>{r.systemId}</TableCell>
                       <TableCell>{r.tableNumber}</TableCell>
                       <TableCell>
-                        {r.emails.map((e) => e.email).join(", ") || "-"}
+                        {(r.emails || []).map((e) => e.email).join(", ") || "-"}
                       </TableCell>
                       <TableCell>
                         {r.vitelGlobal?.id
@@ -1247,7 +1270,7 @@ export default function ITDashboard() {
                           : "-"}
                       </TableCell>
                       <TableCell>{r.vitelGlobal?.id || "-"}</TableCell>
-                      <TableCell>{r.lmPlayer.id || "-"}</TableCell>
+                      <TableCell>{r.lmPlayer?.id || "-"}</TableCell>
                       <TableCell>
                         <Sheet>
                           <SheetTrigger asChild>
@@ -1410,7 +1433,7 @@ export default function ITDashboard() {
                                 </div>
                                 {(r.emails || []).length ? (
                                   <div className="rounded border border-slate-700 bg-slate-800/30 divide-y divide-slate-700">
-                                    {(r.emails as any[]).map(
+                                    {((r.emails || []) as any[]).map(
                                       (e: any, i: number) => (
                                         <div
                                           key={i}

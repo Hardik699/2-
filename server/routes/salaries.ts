@@ -4,6 +4,7 @@ import { nanoid } from "nanoid";
 import multer from "multer";
 import path from "path";
 import fs from "fs";
+import os from "os";
 import mime from "mime-types";
 import { db } from "../data";
 import {
@@ -17,7 +18,13 @@ import {
 } from "@shared/api";
 import { requireAdmin } from "../middleware/auth";
 
-const uploadDir = path.resolve(process.cwd(), "uploads");
+const isServerless = !!(
+  process.env.NETLIFY ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.VERCEL
+);
+const uploadBase = isServerless ? os.tmpdir() : process.cwd();
+const uploadDir = path.resolve(uploadBase, "uploads");
 fs.mkdirSync(uploadDir, { recursive: true });
 
 const storage = multer.diskStorage({
