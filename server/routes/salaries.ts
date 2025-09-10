@@ -30,16 +30,8 @@ try {
   console.warn("Failed to create uploads dir", uploadDir, e?.message || e);
 }
 
-const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => cb(null, uploadDir),
-  filename: (_req, file, cb) => {
-    const id = nanoid(12);
-    const ext =
-      path.extname(file.originalname) ||
-      "." + (mime.extension(file.mimetype) || "bin");
-    cb(null, `${id}${ext}`);
-  },
-});
+// Use memory storage to allow optional S3 uploads; fallback writes to a tmp uploads dir
+const storage = multer.memoryStorage();
 
 const allowedMimes = new Set([
   "application/pdf",
@@ -165,6 +157,16 @@ const listDocs: RequestHandler = async (req, res) => {
   res.json(resp);
 };
 
+const { S3Client, PutObjectCommand } = (() => {
+  try {
+    // lazy require to avoid bundling when not needed
+    // eslint-disable-next-line @typescript-eslint/no-var-requires
+    return require('@aws-sdk/client-s3');
+  } catch (e) {
+    return {} as any;
+  }
+})();
+
 const uploadDocs: RequestHandler = async (req, res) => {
   const { id } = req.params; // salaryId
   const record = await db.getSalary(id);
@@ -178,15 +180,56 @@ const uploadDocs: RequestHandler = async (req, res) => {
   if (!files || files.length === 0)
     return res.status(400).json({ error: "No files uploaded" });
 
+  const s3Bucket = process.env.S3_BUCKET;
+  const s3Region = process.env.S3_REGION || process.env.AWS_REGION || 'us-east-1';
+  let s3Client: any = null;
+  if (s3Bucket && S3Client) {
+    const clientOpts: any = { region: s3Region };
+    if (process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY) {
+      clientOpts.credentials = {
+        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+      };
+    }
+    s3Client = new S3Client(clientOpts);
+  }
+
   for (const f of files) {
+    // f is in memory (buffer) because we're using memoryStorage
+    let filenameStored = f.originalname;
+    let url = "";
+
+    const ext = path.extname(f.originalname) || "." + (mime.extension(f.mimetype) || "bin");
+    const key = `${nanoid(12)}${ext}`;
+
+    if (s3Client) {
+      // upload to S3
+      const cmd = new PutObjectCommand({
+        Bucket: s3Bucket,
+        Key: key,
+        Body: f.buffer,
+        ContentType: f.mimetype,
+      });
+      await s3Client.send(cmd);
+      const publicBase = process.env.S3_PUBLIC_URL_BASE || `https://${s3Bucket}.s3.${s3Region}.amazonaws.com`;
+      url = `${publicBase}/${key}`;
+      filenameStored = key;
+    } else {
+      // fallback: write to local uploads dir (tmp)
+      const dest = path.join(process.env.UPLOADS_DIR || uploadDir, key);
+      await fs.promises.writeFile(dest, f.buffer);
+      filenameStored = key;
+      url = buildDocUrl(filenameStored);
+    }
+
     const doc: SalaryDocument = {
       id: nanoid(12),
       salaryId: id,
       originalName: f.originalname,
-      filename: f.filename,
+      filename: filenameStored,
       mimeType: f.mimetype,
       size: f.size,
-      url: buildDocUrl(f.filename),
+      url,
       createdAt: new Date().toISOString(),
     };
     await db.addDocument(doc);
