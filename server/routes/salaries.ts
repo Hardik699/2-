@@ -161,7 +161,7 @@ const { S3Client, PutObjectCommand } = (() => {
   try {
     // lazy require to avoid bundling when not needed
     // eslint-disable-next-line @typescript-eslint/no-var-requires
-    return require('@aws-sdk/client-s3');
+    return require("@aws-sdk/client-s3");
   } catch (e) {
     return {} as any;
   }
@@ -181,7 +181,8 @@ const uploadDocs: RequestHandler = async (req, res) => {
     return res.status(400).json({ error: "No files uploaded" });
 
   const s3Bucket = process.env.S3_BUCKET;
-  const s3Region = process.env.S3_REGION || process.env.AWS_REGION || 'us-east-1';
+  const s3Region =
+    process.env.S3_REGION || process.env.AWS_REGION || "us-east-1";
   let s3Client: any = null;
   if (s3Bucket && S3Client) {
     const clientOpts: any = { region: s3Region };
@@ -199,7 +200,9 @@ const uploadDocs: RequestHandler = async (req, res) => {
     let filenameStored = f.originalname;
     let url = "";
 
-    const ext = path.extname(f.originalname) || "." + (mime.extension(f.mimetype) || "bin");
+    const ext =
+      path.extname(f.originalname) ||
+      "." + (mime.extension(f.mimetype) || "bin");
     const key = `${nanoid(12)}${ext}`;
 
     if (s3Client) {
@@ -211,7 +214,9 @@ const uploadDocs: RequestHandler = async (req, res) => {
         ContentType: f.mimetype,
       });
       await s3Client.send(cmd);
-      const publicBase = process.env.S3_PUBLIC_URL_BASE || `https://${s3Bucket}.s3.${s3Region}.amazonaws.com`;
+      const publicBase =
+        process.env.S3_PUBLIC_URL_BASE ||
+        `https://${s3Bucket}.s3.${s3Region}.amazonaws.com`;
       url = `${publicBase}/${key}`;
       filenameStored = key;
     } else {

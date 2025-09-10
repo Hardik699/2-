@@ -46,7 +46,8 @@ export function createServer() {
   app.use(attachIdentity);
 
   // Static for uploaded files. Use UPLOADS_DIR env if set, otherwise a writable tmp folder
-  const UPLOADS_DIR = process.env.UPLOADS_DIR || path.join(os.tmpdir(), "uploads");
+  const UPLOADS_DIR =
+    process.env.UPLOADS_DIR || path.join(os.tmpdir(), "uploads");
   try {
     fs.mkdirSync(UPLOADS_DIR, { recursive: true });
   } catch (e) {
