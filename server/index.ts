@@ -46,7 +46,11 @@ export function createServer() {
   app.use(attachIdentity);
 
   // Static for uploaded files (use /tmp on serverless like Netlify/Vercel)
-  const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+  const isServerless = !!(
+    process.env.NETLIFY ||
+    process.env.AWS_LAMBDA_FUNCTION_NAME ||
+    process.env.VERCEL
+  );
   const uploadBase = isServerless ? os.tmpdir() : process.cwd();
   app.use("/uploads", express.static(path.resolve(uploadBase, "uploads")));
 
@@ -232,7 +236,11 @@ export function createServer() {
       );
 
       // Clear uploads directory (respect serverless writable dir)
-      const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+      const isServerless = !!(
+        process.env.NETLIFY ||
+        process.env.AWS_LAMBDA_FUNCTION_NAME ||
+        process.env.VERCEL
+      );
       const uploadBase = isServerless ? os.tmpdir() : process.cwd();
       const uploadsDir = path.resolve(uploadBase, "uploads");
       await fs.rm(uploadsDir, { recursive: true, force: true });

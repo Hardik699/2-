@@ -18,7 +18,11 @@ import {
 } from "@shared/api";
 import { requireAdmin } from "../middleware/auth";
 
-const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+const isServerless = !!(
+  process.env.NETLIFY ||
+  process.env.AWS_LAMBDA_FUNCTION_NAME ||
+  process.env.VERCEL
+);
 const uploadBase = isServerless ? os.tmpdir() : process.cwd();
 const uploadDir = path.resolve(uploadBase, "uploads");
 fs.mkdirSync(uploadDir, { recursive: true });
