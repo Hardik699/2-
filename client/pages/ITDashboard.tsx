@@ -663,9 +663,9 @@ export default function ITDashboard() {
                           <SelectValue placeholder="Select employee" />
                         </SelectTrigger>
                         <SelectContent className="bg-slate-800 border-slate-700 text-white max-h-64">
-                          {employees.map((e) => (
-                            <SelectItem key={e.id} value={e.id}>
-                              {e.fullName}
+                          {(employees || []).filter(Boolean).map((e, i) => (
+                            <SelectItem key={e?.id || i} value={e?.id || ""}>
+                              {e?.fullName || "(unknown)"}
                             </SelectItem>
                           ))}
                         </SelectContent>
@@ -692,9 +692,9 @@ export default function ITDashboard() {
                               No PC/Laptop IDs available
                             </div>
                           ) : (
-                            availableSystemIds.map((id) => (
-                              <SelectItem key={id} value={id}>
-                                {id}
+                            (availableSystemIds || []).filter(Boolean).map((id, i) => (
+                              <SelectItem key={id || i} value={id || ""}>
+                                {id || ""}
                               </SelectItem>
                             ))
                           )}
@@ -858,9 +858,9 @@ export default function ITDashboard() {
                                       No IDs available
                                     </div>
                                   ) : (
-                                    getProviderIds(row.provider).map((id) => (
-                                      <SelectItem key={id} value={id}>
-                                        {id}
+                                    (getProviderIds(row.provider) || []).filter(Boolean).map((id, i) => (
+                                      <SelectItem key={id || i} value={id || ""}>
+                                        {id || ""}
                                       </SelectItem>
                                     ))
                                   )}
@@ -958,9 +958,9 @@ export default function ITDashboard() {
                               No IDs found in System Info
                             </div>
                           ) : (
-                            newProviderIds.map((id) => (
-                              <SelectItem key={id} value={id}>
-                                {id}
+                            (newProviderIds || []).filter(Boolean).map((id, i) => (
+                              <SelectItem key={id || i} value={id || ""}>
+                                {id || ""}
                               </SelectItem>
                             ))
                           )}
@@ -1228,8 +1228,8 @@ export default function ITDashboard() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {filtered.map((r) => (
-                    <TableRow key={r.id}>
+                  {(filtered || []).map((r) => (
+                    <TableRow key={r?.id || r?.employeeId || Math.random().toString(36).slice(2,8)}>
                       <TableCell className="font-medium">
                         {r.employeeName}
                       </TableCell>
