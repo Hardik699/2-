@@ -176,13 +176,15 @@ export default function ITDashboard() {
     let ids = assets
       .filter((a) =>
         newProvider === "vonage"
-          ? a.category === "vonage"
-          : a.category === "vitel" || a.category === "vitel-global",
+          ? a?.category === "vonage"
+          : a?.category === "vitel" || a?.category === "vitel-global",
       )
       .map((a) =>
-        newProvider === "vonage"
-          ? a.vonageExtCode || a.vonageNumber || a.id
-          : a.id,
+        a
+          ? newProvider === "vonage"
+            ? a.vonageExtCode || a.vonageNumber || a.id
+            : a.id
+          : undefined,
       )
       .filter((x: any) => typeof x === "string" && x.trim());
     setNewProviderIds(ids);
@@ -194,13 +196,15 @@ export default function ITDashboard() {
     const assets = raw ? (JSON.parse(raw) as any[]) : [];
     if (provider === "VITEL_GLOBAL") {
       return assets
-        .filter((a: any) => a.category === "vitel-global")
-        .map((a: any) => a.id);
+        .filter((a: any) => a?.category === "vitel-global")
+        .map((a: any) => a?.id)
+        .filter((x: any) => typeof x === "string");
     }
     if (provider === "VONAGE") {
       return assets
-        .filter((a: any) => a.category === "vonage")
-        .map((a: any) => a.vonageExtCode || a.vonageNumber || a.id);
+        .filter((a: any) => a?.category === "vonage")
+        .map((a: any) => (a ? a.vonageExtCode || a.vonageNumber || a.id : undefined))
+        .filter((x: any) => typeof x === "string");
     }
     return [];
   }
@@ -426,14 +430,10 @@ export default function ITDashboard() {
       const ids = assets
         .filter((a: any) =>
           provider === "vonage"
-            ? a.category === "vonage"
-            : a.category === "vitel" || a.category === "vitel-global",
+            ? a?.category === "vonage"
+            : a?.category === "vitel" || a?.category === "vitel-global",
         )
-        .map((a: any) =>
-          provider === "vonage"
-            ? a.vonageExtCode || a.vonageNumber || a.id
-            : a.id,
-        )
+        .map((a: any) => (a ? (provider === "vonage" ? a.vonageExtCode || a.vonageNumber || a.id : a.id) : undefined))
         .filter((x: any) => typeof x === "string" && x.trim());
       setNewProviderIds(ids);
     } catch (err) {
