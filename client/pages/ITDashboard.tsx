@@ -1410,7 +1410,7 @@ export default function ITDashboard() {
                                 </div>
                                 {(r.emails || []).length ? (
                                   <div className="rounded border border-slate-700 bg-slate-800/30 divide-y divide-slate-700">
-                                    {(r.emails as any[]).map(
+                                    {((r.emails || []) as any[]).map(
                                       (e: any, i: number) => (
                                         <div
                                           key={i}
