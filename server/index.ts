@@ -3,6 +3,7 @@ import fs from "fs";
 import express from "express";
 import cors from "cors";
 import path from "path";
+import os from "os";
 import { handleDemo } from "./routes/demo";
 import { attachIdentity, requireAdmin } from "./middleware/auth";
 import { salariesRouter } from "./routes/salaries";
@@ -44,8 +45,10 @@ export function createServer() {
   app.use(express.urlencoded({ extended: true }));
   app.use(attachIdentity);
 
-  // Static for uploaded files
-  app.use("/uploads", express.static(path.resolve(process.cwd(), "uploads")));
+  // Static for uploaded files (use /tmp on serverless like Netlify/Vercel)
+  const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+  const uploadBase = isServerless ? os.tmpdir() : process.cwd();
+  app.use("/uploads", express.static(path.resolve(uploadBase, "uploads")));
 
   // Example API routes
   app.get("/api/ping", (_req, res) => {
@@ -228,8 +231,10 @@ export function createServer() {
         "utf8",
       );
 
-      // Clear uploads directory
-      const uploadsDir = path.resolve(process.cwd(), "uploads");
+      // Clear uploads directory (respect serverless writable dir)
+      const isServerless = !!(process.env.NETLIFY || process.env.AWS_LAMBDA_FUNCTION_NAME || process.env.VERCEL);
+      const uploadBase = isServerless ? os.tmpdir() : process.cwd();
+      const uploadsDir = path.resolve(uploadBase, "uploads");
       await fs.rm(uploadsDir, { recursive: true, force: true });
       await fs.mkdir(uploadsDir, { recursive: true });
 
